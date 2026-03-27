@@ -1,0 +1,106 @@
+# dvc.yaml — VERSION CORRIGÉE
+stages:
+
+  preprocess:
+    cmd: python src/data/preprocess.py
+    deps:
+      - src/data/preprocess.py
+      - data/raw/dataset_ProjetML_2026.csv
+    params:
+      - params.yaml:
+          - preprocess.knn_neighbors
+          - preprocess.outlier_factor
+          - preprocess.test_size
+    outs:
+      - data/processed/X_train.csv
+      - data/processed/X_val.csv
+      - data/processed/X_test.csv
+      - data/processed/y_train.csv
+      - data/processed/y_val.csv
+      - data/processed/y_test.csv
+      - data/processed/dataset_with_nlp.csv
+      - data/processed/train_idx.csv      # ← ajout
+      - data/processed/val_idx.csv        # ← ajout
+      - data/processed/test_idx.csv       # ← ajout
+    metrics:
+      - reports/preprocess_stats.json:
+          cache: false
+
+  train_classifier:
+    cmd: python src/models/train_classifier.py
+    deps:
+      - src/models/train_classifier.py
+      - data/processed/X_train.csv
+      - data/processed/X_val.csv
+      - data/processed/X_test.csv
+      - data/processed/y_train.csv
+      - data/processed/y_val.csv
+      - data/processed/y_test.csv
+    params:
+      - params.yaml:
+          - classifier.n_estimators
+          - classifier.max_depth
+          - classifier.learning_rate
+    outs:
+      - models/best_classifier.pkl
+      - models/best_regressor.pkl         # ← ajout Module 2
+    metrics:
+      - reports/classifier_metrics.json:
+          cache: false
+
+  train_nlp:
+    cmd: python src/nlp/train_nlp.py
+    deps:
+      - src/nlp/train_nlp.py
+      - data/processed/dataset_with_nlp.csv
+      - data/processed/train_idx.csv
+      - data/processed/val_idx.csv
+      - data/processed/test_idx.csv
+    params:
+      - params.yaml:
+          - nlp.max_features
+          - nlp.ngram_max
+    outs:
+      - models/tfidf_vectorizer.pkl
+      - models/bow_vectorizer.pkl         # ← ajout
+      - models/word2vec.model             # ← ajout
+      - models/fasttext.model             # ← ajout
+      - models/best_nlp_classifier.pkl
+    metrics:
+      - reports/nlp_metrics.json:
+          cache: false
+
+  train_multimodal:
+    cmd: python src/multimodal/pipeline_multimodal.py
+    deps:
+      - src/multimodal/pipeline_multimodal.py
+      - data/processed/X_train.csv
+      - data/processed/dataset_with_nlp.csv
+      - data/processed/train_idx.csv
+      - data/processed/val_idx.csv
+      - data/processed/test_idx.csv
+      - models/label_encoder.pkl
+    params:
+      - params.yaml:
+          - multimodal.num_weight
+    outs:
+      - models/best_multimodal_pipeline.pkl
+    metrics:
+      - reports/multimodal_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python src/models/evaluate.py
+    deps:
+      - src/models/evaluate.py
+      - models/best_multimodal_pipeline.pkl
+      - models/label_encoder.pkl
+      - data/processed/X_test.csv
+      - data/processed/y_test.csv
+      - data/processed/test_idx.csv
+    metrics:
+      - reports/final_metrics.json:
+          cache: false
+    plots:
+      - reports/confusion_matrix.csv:
+          cache: false
