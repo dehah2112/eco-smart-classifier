@@ -220,21 +220,39 @@ with tab1:
     num_avail = [c for c in ['Poids','Volume','Conductivite','Opacite','Rigidite'] if c in df.columns]
     sel = st.selectbox("Choisir une variable", num_avail)
     df_lv = df[df['Categorie'].notna()].copy() if 'Categorie' in df.columns else df.copy()
+   # ✅ CODE CORRIGÉ
     ch, cb2 = st.columns(2)
     with ch:
-        if 'Categorie' in df_lv.columns and len(df_lv)>0:
-            df_lv_plot = df_lv[[sel, 'Categorie']].dropna(subset=[sel])
-            fig = px.histogram(df_lv_plot, x=sel, color='Categorie', color_discrete_map=CATEGORY_COLORS, nbins=40, opacity=0.8, title=f"Distribution de {sel}")
+        if 'Categorie' in df_lv.columns and len(df_lv) > 0:
+            df_hist = df_lv[[sel, 'Categorie']].dropna(subset=[sel]).copy()
+            df_hist[sel] = pd.to_numeric(df_hist[sel], errors='coerce')
+            df_hist = df_hist.dropna(subset=[sel])
+            fig = px.histogram(df_hist, x=sel, color='Categorie',
+                               color_discrete_map=CATEGORY_COLORS,
+                               nbins=40, opacity=0.8,
+                               title=f"Distribution de {sel}")
         else:
-           df_plot = df[[sel]].dropna()
-           fig = px.histogram(df_plot, x=sel, nbins=40, title=f"Distribution de {sel}")
+            df_hist = df[[sel]].copy()
+            df_hist[sel] = pd.to_numeric(df_hist[sel], errors='coerce')
+            df_hist = df_hist.dropna(subset=[sel])
+            fig = px.histogram(df_hist, x=sel, nbins=40,
+                               title=f"Distribution de {sel}")
         fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#a5d6a7'),title_font=dict(color='#4caf50'),margin=dict(t=40,b=10,l=10,r=10),height=320)
         st.plotly_chart(fig, use_container_width=True)
+    # ✅ APRÈS
     with cb2:
-        if 'Categorie' in df_lv.columns and len(df_lv)>0:
-            fig = px.box(df_lv,x='Categorie',y=sel,color='Categorie',color_discrete_map=CATEGORY_COLORS,title=f"Boxplot de {sel}")
+        if 'Categorie' in df_lv.columns and len(df_lv) > 0:
+            df_box = df_lv[[sel, 'Categorie']].copy()
+            df_box[sel] = pd.to_numeric(df_box[sel], errors='coerce')
+            df_box = df_box.dropna(subset=[sel])
+            fig = px.box(df_box, x='Categorie', y=sel, color='Categorie',
+                         color_discrete_map=CATEGORY_COLORS,
+                         title=f"Boxplot de {sel}")
         else:
-            fig = px.box(df,y=sel,title=f"Boxplot de {sel}")
+            df_box = df[[sel]].copy()
+            df_box[sel] = pd.to_numeric(df_box[sel], errors='coerce')
+            df_box = df_box.dropna(subset=[sel])
+            fig = px.box(df_box, y=sel, title=f"Boxplot de {sel}")
         fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#a5d6a7'),title_font=dict(color='#4caf50'),margin=dict(t=40,b=10,l=10,r=10),showlegend=False,height=320)
         st.plotly_chart(fig, use_container_width=True)
 
