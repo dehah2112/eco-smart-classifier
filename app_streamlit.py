@@ -223,9 +223,11 @@ with tab1:
     ch, cb2 = st.columns(2)
     with ch:
         if 'Categorie' in df_lv.columns and len(df_lv)>0:
-            fig = px.histogram(df_lv,x=sel,color='Categorie',color_discrete_map=CATEGORY_COLORS,nbins=40,opacity=0.8,title=f"Distribution de {sel}")
+            df_lv_plot = df_lv[[sel, 'Categorie']].dropna(subset=[sel])
+            fig = px.histogram(df_lv_plot, x=sel, color='Categorie', color_discrete_map=CATEGORY_COLORS, nbins=40, opacity=0.8, title=f"Distribution de {sel}")
         else:
-            fig = px.histogram(df,x=sel,nbins=40,title=f"Distribution de {sel}")
+           df_plot = df[[sel]].dropna()
+           fig = px.histogram(df_plot, x=sel, nbins=40, title=f"Distribution de {sel}")
         fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#a5d6a7'),title_font=dict(color='#4caf50'),margin=dict(t=40,b=10,l=10,r=10),height=320)
         st.plotly_chart(fig, use_container_width=True)
     with cb2:
