@@ -1,0 +1,71 @@
+dvc_yaml = """
+# dvc.yaml – Pipeline DAG reproductible
+stages:
+
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - src/preprocess.py
+      - data/raw/dataset_ProjetML_2026.csv
+    params:
+      - params.yaml:
+          - preprocess.knn_neighbors
+          - preprocess.iqr_factor
+    outs:
+      - data/processed/dataset_clean.pkl
+
+  train_classification:
+    cmd: python src/train_clf.py
+    deps:
+      - src/train_clf.py
+      - data/processed/dataset_clean.pkl
+    params:
+      - params.yaml:
+          - train.seed
+          - train.test_size
+          - clf.C
+    outs:
+      - models/classifier.pkl
+      - models/label_encoder.pkl
+      - models/scaler.pkl
+      - models/tfidf.pkl
+    metrics:
+      - metrics/clf_metrics.json:
+          cache: false
+
+  train_regression:
+    cmd: python src/train_reg.py
+    deps:
+      - src/train_reg.py
+      - data/processed/dataset_clean.pkl
+    outs:
+      - models/regressor.pkl
+    metrics:
+      - metrics/reg_metrics.json:
+          cache: false
+
+  cluster:
+    cmd: python src/cluster.py
+    deps:
+      - src/cluster.py
+      - data/processed/dataset_clean.pkl
+    outs:
+      - models/kmeans.pkl
+      - data/processed/dataset_with_clusters.csv
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/classifier.pkl
+      - data/processed/dataset_clean.pkl
+    metrics:
+      - metrics/eval_metrics.json:
+          cache: false
+"""
+
+# Sauvegarder dvc.yaml
+with open('dvc.yaml', 'w') as f:
+    f.write(dvc_yaml)
+print('dvc.yaml cree')
+print(dvc_yaml)

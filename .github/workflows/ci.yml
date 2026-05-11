@@ -1,0 +1,68 @@
+Path('.github/workflows').mkdir(parents=True, exist_ok=True)
+
+ci_yaml = """name: CI - Eco-Smart Classifier
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install linters
+        run: pip install black flake8 isort
+      - name: Black (format check)
+        run: black --check src/ api/ tests/
+      - name: Flake8 (lint)
+        run: flake8 src/ api/ tests/ --max-line-length=100
+      - name: Isort (imports)
+        run: isort --check-only src/ api/ tests/
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Download NLTK data
+        run: python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+      - name: Run tests with coverage
+        run: |
+          pip install pytest pytest-cov
+          pytest tests/ -v --cov=src --cov=api --cov-report=term-missing \
+                 --cov-fail-under=70 --ignore=tests/test_api.py
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t eco-smart-classifier:latest .
+      - name: Test Docker image
+        run: |
+          docker run -d -p 8000:8000 --name test-api eco-smart-classifier:latest
+          sleep 5
+          curl -f http://localhost:8000/health || exit 1
+          docker stop test-api
+"""
+
+with open('.github/workflows/ci.yml', 'w') as f:
+    f.write(ci_yaml)
+print('.github/workflows/ci.yml cree')

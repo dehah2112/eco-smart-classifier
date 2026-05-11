@@ -1,0 +1,31 @@
+# Environnement virtuel 
+venv/ 
+Commande ECHO activ‚e.
+# Python cache 
+__pycache__/ 
+*.pyc 
+*.pyo 
+Commande ECHO activ‚e.
+# DVC 
+.dvc/ 
+.dvc/tmp/ 
+.dvc/cache/ 
+Commande ECHO activ‚e.
+# Donn‚es et modŠles 
+data/raw/*.csv 
+data/processed/ 
+models/*.pkl 
+*.pkl 
+Commande ECHO activ‚e.
+# Logs et rapports 
+*.log 
+metrics/*.json 
+Commande ECHO activ‚e.
+# Tests 
+.pytest_cache/ 
+.coverage 
+htmlcov/ 
+Commande ECHO activ‚e.
+# IDE 
+.vscode/ 
+.idea/ 
