@@ -1,71 +1,109 @@
-dvc_yaml = """
-# dvc.yaml – Pipeline DAG reproductible
-stages:
-
-  preprocess:
-    cmd: python src/preprocess.py
-    deps:
-      - src/preprocess.py
-      - data/raw/dataset_ProjetML_2026.csv
-    params:
-      - params.yaml:
-          - preprocess.knn_neighbors
-          - preprocess.iqr_factor
-    outs:
-      - data/processed/dataset_clean.pkl
-
-  train_classification:
-    cmd: python src/train_clf.py
-    deps:
-      - src/train_clf.py
-      - data/processed/dataset_clean.pkl
-    params:
-      - params.yaml:
-          - train.seed
-          - train.test_size
-          - clf.C
-    outs:
-      - models/classifier.pkl
-      - models/label_encoder.pkl
-      - models/scaler.pkl
-      - models/tfidf.pkl
-    metrics:
-      - metrics/clf_metrics.json:
+# dvc.yaml - Pipeline DAG reproductible 
+# Eco-Smart Classifier 
+# Commande : dvc repro 
+ 
+stages: 
+ 
+  preprocess: 
+    cmd: python src/preprocess.py 
+    deps: 
+      - src/preprocess.py 
+      - data/raw/dataset_ProjetML_2026.csv 
+    params: 
+      - params.yaml: 
+          - preprocess.knn_neighbors 
+          - preprocess.iqr_factor 
+    outs: 
+      - data/processed/dataset_clean.pkl 
+      - data/processed/dataset_clean.csv 
+ 
+  train_classification: 
+    cmd: python src/train_clf.py 
+    deps: 
+      - src/train_clf.py 
+      - data/processed/dataset_clean.pkl 
+      - models/label_encoder.pkl 
+    params: 
+      - params.yaml: 
+          - train.seed 
+          - train.test_size 
+          - clf.C 
+    outs: 
+      - models/classifier.pkl 
+    metrics: 
+      - metrics/clf_metrics.json: 
+          cache: false 
+ 
+  train_regression: 
+    cmd: python src/train_reg.py 
+    deps: 
+      - src/train_reg.py 
+      - data/processed/dataset_clean.pkl 
+    params: 
+      - params.yaml: 
+          - train.seed 
+          - train.test_size 
+          - reg.n_estimators 
+          - reg.max_depth 
+    outs: 
+      - models/regressor.pkl 
+    metrics: 
+      - metrics/reg_metrics.json: 
+          cache: false 
+ 
+  nlp_pipeline: 
+    cmd: python src/nlp_pipeline.py 
+    deps: 
+      - src/nlp_pipeline.py 
+      - data/raw/dataset_ProjetML_2026.csv 
+    params: 
+      - params.yaml: 
+          - train.seed 
+          - preprocess.max_features_tfidf 
+          - preprocess.ngram_range 
+    outs: 
+      - models/tfidf.pkl 
+      - models/nlp_classifier.pkl 
+      - models/label_encoder.pkl 
+    metrics: 
+      - metrics/nlp_metrics.json: 
+          cache: false 
+ 
+  multimodal: 
+    cmd: python src/multimodal.py 
+    deps: 
+      - src/multimodal.py 
+      - data/raw/dataset_ProjetML_2026.csv 
+      - models/label_encoder.pkl 
+    params: 
+      - params.yaml: 
+          - train.seed 
+          - train.test_size 
+          - preprocess.max_features_tfidf 
+          - preprocess.ngram_range 
+    outs: 
+      - models/classifier.pkl 
+      - models/scaler.pkl 
+      - models/num_features.json 
+    metrics: 
+      - metrics/mm_metrics.json: 
+          cache: false 
+ 
+  cluster: 
+    cmd: python src/cluster.py 
+    deps: 
+      - src/cluster.py 
+      - data/raw/dataset_ProjetML_2026.csv 
+    params: 
+      - params.yaml: 
+          - cluster.k_range 
+          - cluster.n_init 
+          - train.seed 
+    outs: 
+      - models/kmeans.pkl 
+      - models/scaler_clust.pkl 
+      - models/pca_2d.pkl 
+      - data/processed/dataset_with_clusters.csv 
+    metrics: 
+      - metrics/cluster_metrics.json: 
           cache: false
-
-  train_regression:
-    cmd: python src/train_reg.py
-    deps:
-      - src/train_reg.py
-      - data/processed/dataset_clean.pkl
-    outs:
-      - models/regressor.pkl
-    metrics:
-      - metrics/reg_metrics.json:
-          cache: false
-
-  cluster:
-    cmd: python src/cluster.py
-    deps:
-      - src/cluster.py
-      - data/processed/dataset_clean.pkl
-    outs:
-      - models/kmeans.pkl
-      - data/processed/dataset_with_clusters.csv
-
-  evaluate:
-    cmd: python src/evaluate.py
-    deps:
-      - src/evaluate.py
-      - models/classifier.pkl
-      - data/processed/dataset_clean.pkl
-    metrics:
-      - metrics/eval_metrics.json:
-          cache: false
-"""
-
-# Sauvegarder dvc.yaml
-with open('dvc.yaml', 'w') as f:
-    f.write(dvc_yaml)
-print('dvc.yaml cree')
-print(dvc_yaml)

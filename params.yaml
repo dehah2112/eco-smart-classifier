@@ -1,30 +1,32 @@
-params_yaml = """
-# params.yaml – Hyperparamètres du pipeline
+# params.yaml – Hyperparamètres du pipeline DVC
+# Eco-Smart Classifier
+# Modifié ici → dvc repro détecte automatiquement les changements
+
 preprocess:
-  knn_neighbors: 5
-  iqr_factor: 3.0
-  max_features_tfidf: 10000
-  ngram_range: [1, 2]
+  knn_neighbors: 5        # KNNImputer : nombre de voisins
+  iqr_factor: 3.0         # Clipping outliers : IQR × factor
+  max_features_tfidf: 10000  # TF-IDF : nombre max de features
+  ngram_range: [1, 2]     # TF-IDF : unigrammes + bigrammes
 
 train:
-  seed: 42
-  test_size: 0.30
-  val_size: 0.50
-  cv_folds: 5
+  seed: 42                # Graine aléatoire (reproductibilité)
+  test_size: 0.30         # Proportion val+test (30%)
+  val_size: 0.50          # Proportion val dans val+test (15% final)
+  cv_folds: 5             # Nombre de folds cross-validation
 
 clf:
-  C: 5.0
-  max_iter: 1000
+  C: 5.0                  # Régularisation LogReg / LinearSVC
+  max_iter: 1000          # Itérations max LogReg
 
 reg:
-  n_estimators: 200
-  max_depth: 20
+  n_estimators: 200       # Nombre d'arbres RandomForest
+  max_depth: 20           # Profondeur max des arbres
 
 cluster:
-  k_range: [2, 12]
-  n_init: 20
-"""
+  k_range: [2, 12]        # Plage de k testée (Elbow Method)
+  n_init: 20              # Nombre d'initialisations K-Means
 
-with open('params.yaml', 'w') as f:
-    f.write(params_yaml)
-print('params.yaml cree')
+nlp:
+  min_df: 2               # Fréquence minimum d'un token
+  max_df: 0.95            # Fréquence maximum d'un token
+  sublinear_tf: true      # log(tf) + 1 pour stabiliser
